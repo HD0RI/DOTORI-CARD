@@ -105,11 +105,11 @@
     padding:11px 6px; border-radius:9px; font-family:var(--font-mono); font-size:12px; letter-spacing:.04em; transition:.15s; }
   .bg-toggle button:hover{ color:#cfd3dc; }
   .bg-toggle button[aria-pressed="true"]{ color:var(--text); background:var(--acf-14); border-color:var(--accent); }
-  .scaler{ position:absolute; top:0; left:50%; width:920px; height:440px; transform-origin:top center; will-change:transform; z-index:1; }
+  .scaler{ position:absolute; top:0; left:50%; width:860px; height:440px; transform-origin:top center; will-change:transform; z-index:1; }
 
   /* ==================== THE CARD (HUD) ==================== */
   .card{
-    position:relative; width:920px; height:440px; border-radius:11px; overflow:hidden;
+    position:relative; width:860px; height:440px; border-radius:11px; overflow:hidden;
     background-color:#0a0d13;
     background-image:
       linear-gradient(rgba(150,170,210,.045) 1px, transparent 1px),
@@ -868,10 +868,10 @@ function render(){
 let curScale=1;
 function rescale(){
   const m=state.exportMargin||0;
-  const avail=$('preview').clientWidth || 920;
-  const s=Math.min(1, avail/(920 + 2*m));
+  const avail=$('preview').clientWidth || 860;
+  const s=Math.min(1, avail/(860 + 2*m));
   curScale = s;
-  const pad=m*s, cw=920*s, chh=440*s;
+  const pad=m*s, cw=860*s, chh=440*s;
   [['stageF','scalerF'],['stageB','scalerB']].forEach(([stg,scl])=>{
     const el=$(scl), st=$(stg); if(!el) return;
     st.style.width=''; st.style.margin=''; st.style.padding='';
@@ -1126,7 +1126,7 @@ $('bBars').innerHTML=makeBars();
 /* VOID theme: teal city skyline */
 let cityGeo=null;
 function buildCityGeo(){
-  const w=920,h=118; let back='',front='',win='';
+  const w=860,h=118; let back='',front='',win='';
   let x=0; while(x<w){ const bw=22+(Math.random()*44|0), bh=28+(Math.random()*40|0);
     back+=`<rect x="${x}" y="${h-bh}" width="${bw}" height="${bh}"/>`; x+=bw+(4+(Math.random()*8|0)); }
   x=-12; while(x<w){ const bw=30+(Math.random()*56|0), bh=46+(Math.random()*52|0);
@@ -1176,17 +1176,17 @@ async function renderCard(el){
   await document.fonts.ready;
   const clone=el.cloneNode(true);
   clone.querySelectorAll('.ph').forEach(n=>{ n.textContent=''; });
-  /* html2canvas blooms soft glows (radial gradients, text-shadow, inset/soft box-shadow)
-     into solid fills, flooding the card with color. Strip them so export matches the preview. */
+  /* html2canvas blooms soft glows (radial gradients, text-shadow, box-shadow) into solid
+     fills, flooding the card with color. Strip them so export matches the preview. */
   clone.querySelectorAll('.glow, .scan').forEach(n=>{ n.style.display='none'; });
-  clone.querySelectorAll('*').forEach(n=>{ n.style.textShadow='none'; });
-  clone.querySelectorAll('.reticle, .hud-frame, .telem .dot').forEach(n=>{ n.style.boxShadow='none'; });
+  clone.style.boxShadow='none';
+  clone.querySelectorAll('*').forEach(n=>{ n.style.textShadow='none'; n.style.boxShadow='none'; });
   clone.querySelectorAll('.icon').forEach(n=>{ n.style.filter='none'; });
   const holder=document.createElement('div');
-  holder.style.cssText='position:fixed;left:-10000px;top:0;width:920px;height:440px;';
+  holder.style.cssText='position:fixed;left:-10000px;top:0;width:860px;height:440px;';
   holder.appendChild(clone); document.body.appendChild(holder);
   sanitizeColors(clone);
-  const canvas=await html2canvas(clone,{backgroundColor:null, scale:SCALE, useCORS:true, logging:false, width:920, height:440});
+  const canvas=await html2canvas(clone,{backgroundColor:null, scale:SCALE, useCORS:true, logging:false, width:860, height:440});
   holder.remove();
   return canvas;
 }
