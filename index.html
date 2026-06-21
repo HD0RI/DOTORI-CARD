@@ -405,6 +405,37 @@
   .modal-close:hover{ color:var(--text); }
 
   footer{ text-align:center; color:var(--muted-2); font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; padding:30px 20px 40px; }
+
+  /* +1px — more legible edit-panel / control text */
+  .tabs .tab{ font-size:13px; }
+  .field > label{ font-size:11.5px; }
+  .panel input[type=text], .panel select{ font-size:15px; }
+  .panel textarea{ font-size:14px; }
+  .slider > span{ font-size:11px; }
+  .slider > b{ font-size:12px; }
+  .seg button{ font-size:12px; }
+  .drop{ font-size:14px; }
+  .linkbtn{ font-size:12px; }
+  .sr-label{ font-size:12px; }
+  .swatches.mini .cs-def{ font-size:12px; }
+  .bg-toggle button{ font-size:13px; }
+  .hint{ font-size:12px; }
+  .btn{ font-size:13px; }
+  .topbar-actions .btn{ font-size:12px; }
+  .themebar .tb-label, .tb-opts button{ font-size:12px; }
+  .modal-opt{ font-size:15px; }
+  .modal-opt small{ font-size:11px; }
+  .modal > p{ font-size:13px; }
+  .modal h3{ font-size:15px; }
+  /* Preview ＝ PNG export: drop effects html2canvas can't reproduce, keep only the outer
+     drop shadow (for on-page framing; it isn't part of the saved card anyway). */
+  .card .glow, .card .scan{ display:none !important; }
+  .card *{ box-shadow:none !important; text-shadow:none !important; }
+  .card .icon{ filter:none !important; }
+  .card{ box-shadow:0 30px 70px -28px rgba(0,0,0,.9) !important; }
+  .card[data-theme="neon"]{ box-shadow:0 30px 70px -28px rgba(0,0,0,.95) !important; }
+  .card[data-theme="minimal"]{ box-shadow:0 30px 70px -30px rgba(0,0,0,.8) !important; }
+  .card[data-theme="void"]{ box-shadow:0 30px 70px -28px rgba(45,50,0,.55) !important; }
 </style>
 </head>
 <body>
@@ -609,6 +640,13 @@
       <div class="style-row" data-fieldstyle="serial"></div>
     </div>
     <div class="field">
+      <label>카드 번호 위치 · 크기 <small>뒷면 큰 숫자</small></label>
+      <div class="slider"><span>좌우</span><input type="range" id="serialX" min="-600" max="140" step="2" value="0"><b id="serialXV">0</b></div>
+      <div class="slider"><span>상하</span><input type="range" id="serialY" min="-340" max="40" step="2" value="0"><b id="serialYV">0</b></div>
+      <div class="slider"><span>크기</span><input type="range" id="serialSize" min="32" max="150" step="1" value="86"><b id="serialSizeV">86px</b></div>
+      <button class="linkbtn" id="serialReset">↺ 위치·크기 초기화</button>
+    </div>
+    <div class="field">
       <label>발급일 / 만료일</label>
       <div class="row3" style="grid-template-columns:1fr 1fr">
         <input type="text" id="iIssued" value="" placeholder="발급일">
@@ -728,6 +766,7 @@ const state = {
   imgScale:1, imgX:0, imgY:0, imgRot:0, nameSize:null,
   serial:'', issued:'', expires:'',
   clearance:'', unit:'', previewBg:'dark', exportMargin:0,
+  serialX:0, serialY:0, serialSize:86,
   note:'습득 시 가까운 지부로 반납해주십시오. 무단 사용 및 복제를 금합니다.'
 };
 
@@ -858,6 +897,8 @@ function render(){
   $('bName').style.fontFamily = FONTS[state.nameFont] || '';
   applyFieldStyle('pKanji','kanji');
   applyFieldStyle('bSerial','serial'); applyFieldStyle('bCode','serial');
+  const bSer=$('bSerial'); bSer.style.fontSize=(state.serialSize||86)+'px';
+  bSer.parentElement.style.transform=`translate(${state.serialX||0}px, ${state.serialY||0}px)`;
   ['bIssued','bExpires','bClear','bUnit'].forEach(id=>applyFieldStyle(id,'meta'));
   applyFieldStyle('bNote','note');
   fitName();
@@ -907,6 +948,17 @@ function setBg(v){
 }
 $('bgToggle').addEventListener('click', e=>{ const b=e.target.closest('button[data-bg]'); if(b) setBg(b.dataset.bg); });
 $('expMargin').addEventListener('input', e=>{ state.exportMargin=parseInt(e.target.value,10); $('expMarginV').textContent=state.exportMargin+'px'; rescale(); queueSave(); });
+
+/* back card-number position & size */
+$('serialX').addEventListener('input', e=>{ state.serialX=parseInt(e.target.value,10); $('serialXV').textContent=state.serialX; render(); });
+$('serialY').addEventListener('input', e=>{ state.serialY=parseInt(e.target.value,10); $('serialYV').textContent=state.serialY; render(); });
+$('serialSize').addEventListener('input', e=>{ state.serialSize=parseInt(e.target.value,10); $('serialSizeV').textContent=state.serialSize+'px'; render(); });
+$('serialReset').addEventListener('click', ()=>{ state.serialX=0; state.serialY=0; state.serialSize=86; syncSerialControls(); render(); });
+function syncSerialControls(){
+  $('serialX').value=state.serialX||0; $('serialXV').textContent=state.serialX||0;
+  $('serialY').value=state.serialY||0; $('serialYV').textContent=state.serialY||0;
+  $('serialSize').value=state.serialSize||86; $('serialSizeV').textContent=(state.serialSize||86)+'px';
+}
 
 /* edit tabs (front / back) */
 $('editTabs').addEventListener('click', e=>{
@@ -1048,7 +1100,7 @@ $('reset').addEventListener('click',()=>{
 });
 
 /* ---------------- save / load / autosave ---------------- */
-const PROJECT_KEYS=['kanji','kanjiColor','kanjiFont','name','nameColor','nameFont','div','divColor','divFont','misc','miscColor','miscFont','side','accent','accent2','icon','img','theme','imgScale','imgX','imgY','imgRot','nameSize','serial','serialColor','serialFont','issued','expires','clearance','unit','metaColor','metaFont','note','noteColor','noteFont','previewBg','exportMargin'];
+const PROJECT_KEYS=['kanji','kanjiColor','kanjiFont','name','nameColor','nameFont','div','divColor','divFont','misc','miscColor','miscFont','side','accent','accent2','icon','img','theme','imgScale','imgX','imgY','imgRot','nameSize','serial','serialColor','serialFont','serialX','serialY','serialSize','issued','expires','clearance','unit','metaColor','metaFont','note','noteColor','noteFont','previewBg','exportMargin'];
 const LSKEY='espiu_card_v1';
 function snapshot(){ const o={}; PROJECT_KEYS.forEach(k=>o[k]=state[k]); return o; }
 function syncAllControls(){
@@ -1077,6 +1129,7 @@ function syncAllControls(){
   [...$('bgToggle').querySelectorAll('button[data-bg]')].forEach(b=>b.setAttribute('aria-pressed', b.dataset.bg===bg));
   $('expMargin').value=state.exportMargin||0;
   $('expMarginV').textContent=(state.exportMargin||0)+'px';
+  syncSerialControls();
 }
 function applyState(o){
   PROJECT_KEYS.forEach(k=>{ if(o[k]!==undefined) state[k]=o[k]; });
@@ -1179,7 +1232,7 @@ async function renderCard(el){
   /* html2canvas blooms soft glows (radial gradients, text-shadow, box-shadow) into solid
      fills, flooding the card with color. Strip them so export matches the preview. */
   clone.querySelectorAll('.glow, .scan').forEach(n=>{ n.style.display='none'; });
-  clone.style.boxShadow='none';
+  clone.style.setProperty('box-shadow','none','important');
   clone.querySelectorAll('*').forEach(n=>{ n.style.textShadow='none'; n.style.boxShadow='none'; });
   clone.querySelectorAll('.icon').forEach(n=>{ n.style.filter='none'; });
   const holder=document.createElement('div');
