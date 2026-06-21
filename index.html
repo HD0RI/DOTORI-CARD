@@ -1176,6 +1176,12 @@ async function renderCard(el){
   await document.fonts.ready;
   const clone=el.cloneNode(true);
   clone.querySelectorAll('.ph').forEach(n=>{ n.textContent=''; });
+  /* html2canvas blooms soft glows (radial gradients, text-shadow, inset/soft box-shadow)
+     into solid fills, flooding the card with color. Strip them so export matches the preview. */
+  clone.querySelectorAll('.glow, .scan').forEach(n=>{ n.style.display='none'; });
+  clone.querySelectorAll('*').forEach(n=>{ n.style.textShadow='none'; });
+  clone.querySelectorAll('.reticle, .hud-frame, .telem .dot').forEach(n=>{ n.style.boxShadow='none'; });
+  clone.querySelectorAll('.icon').forEach(n=>{ n.style.filter='none'; });
   const holder=document.createElement('div');
   holder.style.cssText='position:fixed;left:-10000px;top:0;width:920px;height:440px;';
   holder.appendChild(clone); document.body.appendChild(holder);
